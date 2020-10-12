@@ -47,13 +47,40 @@ function onMainPromptAnswer({action}) {
         case "View All Departments":
             departmentSearch();
             break;
+        case "View All Roles":
+            roleSearch();
+            break;
+        case "View All Employees":
+            allEmployeeSearch();
+            break;
         default:
             connnection.end();
     }
 }
 
 function departmentSearch() {
-    const query = "SELECT * from department";
+    const query = "SELECT * FROM department";
+    consoleOutQuery(query);
+}
+
+function roleSearch() {
+    const query = "SELECT * FROM role";
+    consoleOutQuery(query);
+}
+
+function allEmployeeSearch() {
+    const query = 
+    `SELECT 
+	    e.first_name, e.last_name, r.title, d.name AS department, r.salary, CONCAT(e1.first_name, " ", e1.last_name) as manager 
+    FROM 
+	    employee e
+    INNER JOIN role r ON e.role_id = r.id 
+    INNER JOIN department d ON r.department_id = d.id
+    LEFT JOIN employee e1 ON e.manager_id = e1.id;`;
+    consoleOutQuery(query);
+}
+
+function consoleOutQuery(query) {
     connnection.query(query, (err, res) => {
         if(err)
             throw err;
