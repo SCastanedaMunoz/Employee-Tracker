@@ -28,4 +28,3 @@ VALUES
 	("Sarah", "Lourd", 6, null),
 	("Tom", "Allen", 7, 6),
 	("Christian", "Eckenrode", 3, 2);
-	
