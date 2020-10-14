@@ -7,7 +7,7 @@ const connnection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Septiembre09#",
+    password: "",
     database: "employee_tracker"
 });
 
@@ -70,6 +70,9 @@ function onMainPromptAnswer({action}) {
             break;
         case "Update Employee Role":
             updateEmployeeRole();
+            break;
+        case "Update Employee Manager":
+            updateEmployeeManager();
             break;
         default:
             connnection.end();
@@ -267,7 +270,6 @@ function addRole() {
 
 const allRoleByTitleQuery = "SELECT id, title as name, salary, department_id FROM role";
 function addEmployee() {
-
     const noManagerKey = "=====No Manager=====";
     let role_id;
     let manager_id;
@@ -284,7 +286,7 @@ function addEmployee() {
                 message: "What Is The New Employee Role?",
                 choices: allRoleRes
             }).then(({role}) => {
-                role_id = allRoleRes.filter(item => item.name === role)[0].id;
+                role_id = allRoleRes.find(item => item.name === role).id;
                 getManager();
             });
         });
@@ -363,7 +365,7 @@ function updateEmployeeRole() {
                 type: "list",
                 message: "What Employee Would You Like To Update?",
                 choices: allEmployee
-            }, {
+            },{
                 name: "role_title",
                 type: "list",
                 message: "What Role Would You Like To Give To This Employee?",
@@ -377,6 +379,56 @@ function updateEmployeeRole() {
                     console.log(chalk.greenBright(`\nSuccessfully Updated ${chalk.yellowBright(employee_name)} Role To ${chalk.yellowBright(role_title)}\n`));
                     mainPrompt();
                 });
+            });
+        });
+    });
+}
+
+function updateEmployeeManager() {
+    const noManagerKey = "=====No Manager=====";
+    const updateEmployeeManagerQuery = `UPDATE employee_tracker.employee SET manager_id = ? WHERE id = ?;`
+    connnection.query(allEmployeeByNameQuery, (errE, allEmployee) => {
+        if (errE)
+            throw errE;
+
+        let employee;
+        
+        inquirer.prompt({
+            name: "employee_name",
+            type: "list",
+            message: "What Employee Would You Like To Update?",
+            choices: allEmployee
+        }).then(({employee_name}) => {
+            employee = allEmployee.find(item => item.name === employee_name);
+            const possibleManagers = allEmployee.filter(item => item.name !== employee_name);
+            possibleManagers.push({name: noManagerKey});
+
+            return inquirer.prompt({
+                name: "manager",
+                type: "list",
+                message: "Who Would You Like The New Manager to Be?",
+                choices: possibleManagers
+            });
+        }).then(({manager}) => {
+            let manager_id;
+            let manager_name;
+            if(manager === noManagerKey)
+            {
+                manager_id = null;
+                manager_name = "No Manager";
+            }
+            else
+            {
+                let m = allEmployee.find(item => item.name === manager);
+                manager_id = m.id;
+                manager_name = m.name;
+            }
+
+            connnection.query(updateEmployeeManagerQuery, [manager_id, employee.id], (err, res) => {
+                if(err)
+                    throw err;
+                console.log(chalk.greenBright(`\nSuccessfully Updated ${chalk.yellowBright(employee.name)} Manager To ${chalk.yellowBright(manager_name)}\n`));
+                mainPrompt();
             });
         });
     });
