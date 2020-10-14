@@ -62,6 +62,9 @@ function onMainPromptAnswer({action}) {
         case "Add Department":
             addDeparment();
             break;
+        case "Add Role":
+            addRole();
+            break;
         default:
             connnection.end();
     }
@@ -171,10 +174,8 @@ function addDeparment() {
         type: "input",
         message: "What's the Department Name?",
         validate: async input => {
-
             if(!input || input.trim().length == 0)
                 return 'Department Name Must be Provided';
-
             return true;
         }
     }).then(({department}) => {
@@ -192,6 +193,71 @@ function addDeparment() {
         });
     });
 }
+
+function addRole() {
+    const addRoleQuery = 
+    `INSERT INTO 
+        role(title, salary, department_id)
+    SELECT * FROM (SELECT ?, ?, ?) AS tmp
+    WHERE NOT EXISTS (
+        SELECT title FROM role WHERE title = ?
+    )
+    LIMIT 1`;
+
+    connnection.query(allDepartmentQuery, (err, allDepRes) => {
+        if (err)
+            throw err;
+        let selectedDepartment;
+        
+        inquirer.prompt({
+            name: "department",
+            type: "list",
+            message: "What Department Does The New Role Belong To?",
+            choices: allDepRes
+        }).then(({department}) => {
+            selectedDepartment = allDepRes.find(item => item.name === department);
+            return inquirer.prompt([{
+                name: "title",
+                type: "input",
+                message: "What Is the Role Title?",
+                validate: async input => {
+                    if(!input || input.trim().length == 0)
+                        return 'Role Title Must be Provided';
+                    return true;
+                }
+            }, {
+                name: "salary",
+                type: "input",
+                message: "What Is the Role Salary?",
+                validate: async input => {
+                    if(!input || input.trim().length == 0)
+                    return 'Salary Must be Provided'
+
+                    if(isNaN(input))
+                        return 'Salary Must be a Numeric Value';
+
+                    if(input < 0)
+                        return 'Salary Must be Greater or Equal 0'
+                    return true;
+                }
+            }]);
+        }).then(({title, salary}) =>  {
+            connnection.query(addRoleQuery, [title, salary, selectedDepartment.id, title], (err, res) => {
+                if (err)
+                    throw err;
+
+                if(res.affectedRows === 0) {
+                    console.log(chalk.redBright(`\n${chalk.yellowBright(title)} Role Already Exists on Database Ignoring Query!\n`));
+                    return mainPrompt();
+                }
+
+                console.log(chalk.greenBright(`\nSuccessfully Added ${chalk.yellowBright(title)} Role Into ${chalk.yellowBright(selectedDepartment.name)} Department`));
+                allRoleSearch();
+            });
+        });
+    })
+}
+
 
 function consoleOutQuery(query, message) {
     connnection.query(query, (err, res) => {
