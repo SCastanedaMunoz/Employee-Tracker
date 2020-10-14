@@ -34,6 +34,7 @@ function mainPrompt() {
             "Add Employee",
             "Update Employee Role",
             "Update Employee Manager",
+            "Delete Employee",
             "Exit"
         ]
     }).then(onMainPromptAnswer);
@@ -70,6 +71,9 @@ function onMainPromptAnswer({action}) {
             break;
         case "Update Employee Manager":
             updateEmployeeManager();
+            break;
+        case "Delete Employee":
+            deleteEmployee();
             break;
         default:
             connnection.end();
@@ -425,6 +429,29 @@ function updateEmployeeManager() {
                 if(err)
                     throw err;
                 console.log(chalk.greenBright(`\nSuccessfully Updated ${chalk.yellowBright(employee.name)} Manager To ${chalk.yellowBright(manager_name)}\n`));
+                mainPrompt();
+            });
+        });
+    });
+}
+
+function deleteEmployee() {
+    const deleteEmployeeQuery = `DELETE FROM employee WHERE id = ?`
+    connnection.query(allEmployeeByNameQuery, (err, res) => {
+        if (err)
+            throw err;
+        
+        inquirer.prompt({
+            name: "name",
+            type:"list",
+            message: "What Employee Would You Like To Delete?",
+            choices: res
+        }).then(({name}) => {
+            let employee = res.find(item => item.name === name);
+            connnection.query(deleteEmployeeQuery, employee.id, (err, res) => {
+                if(err)
+                    throw err;
+                console.log(chalk.greenBright(`\nSuccessfully Deleted ${chalk.yellowBright(employee.name)} From Employees\n`));
                 mainPrompt();
             });
         });
