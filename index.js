@@ -34,9 +34,6 @@ function mainPrompt() {
             "Add Employee",
             "Update Employee Role",
             "Update Employee Manager",
-            "Remove Department",
-            "Remove Role",
-            "Remove Employee",
             "Exit"
         ]
     }).then(onMainPromptAnswer);
