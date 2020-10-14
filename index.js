@@ -65,6 +65,9 @@ function onMainPromptAnswer({action}) {
         case "Add Role":
             addRole();
             break;
+        case "Add Employee":
+            addEmployee();
+            break;
         default:
             connnection.end();
     }
@@ -80,6 +83,7 @@ function allRoleSearch() {
     consoleOutQuery(allRoleQuery, chalk.greenBright(`\nSeeing All Roles!\n`));
 }
 
+const allEmployeeByNameQuery = "SELECT id, CONCAT(e.first_name, ' ', e.last_name) as name FROM employee_tracker.employee e"; 
 function allEmployeeSearch() {
     const allEmployeeQuery = 
     `SELECT 
@@ -255,9 +259,92 @@ function addRole() {
                 allRoleSearch();
             });
         });
-    })
+    });
 }
 
+function addEmployee() {
+
+    const noManagerKey = "=====No Manager=====";
+    const allRoleByTitle = "SELECT id, title as name, salary, department_id FROM role";
+    let role_id;
+    let manager_id;
+    getRole();
+
+    function getRole() {
+        connnection.query(allRoleByTitle, (err, allRoleRes) => {
+            if (err)
+                throw err;
+            
+            inquirer.prompt({
+                name: "role",
+                type: "list",
+                message: "What Is The New Employee Role?",
+                choices: allRoleRes
+            }).then(({role}) => {
+                role_id = allRoleRes.filter(item => item.name === role)[0].id;
+                getManager();
+            });
+        });
+    }
+
+    function getManager() {
+        connnection.query(allEmployeeByNameQuery, (err, res) => {
+            if (err)
+                throw err;
+
+            res.push({name: noManagerKey});
+            
+            inquirer.prompt({
+                name: "manager",
+                type: "list",
+                message: "Who Will Be This Employee's Manager?",
+                choices: res
+            },).then(({manager}) => {
+                if(manager === noManagerKey)
+                    manager_id = null;
+                else
+                    manager_id = res.find(item => item.name === manager).id;
+                insertEmployee();
+            });
+        });
+    }
+
+    const insertEmployeeQuery = 
+    `INSERT INTO 
+        employee (first_name, last_name, role_id, manager_id)
+    VALUES (?, ?, ?, ?)`;
+    function insertEmployee() {
+        inquirer.prompt([
+            {
+                name: "first_name",
+                type: "input",
+                message: "What Is The Employee First Name?",
+                validate: async input => {
+                    if(!input || input.trim().length == 0)
+                        return 'First Name Must be Provided';
+                    return true;
+                }
+            },
+            {
+                name: "last_name",
+                type: "input",
+                message: "What Is The Employee Last Name?",
+                validate: async input => {
+                    if(!input || input.trim().length == 0)
+                        return 'Last Name Must be Provided';
+                    return true;
+                }
+            }
+        ]).then(({first_name, last_name}) => {
+            let query =  connnection.query(insertEmployeeQuery, [first_name, last_name, role_id, manager_id], (err, res) => {
+                if (err)
+                    throw err;
+                console.log(chalk.greenBright(`\nSuccessfully Added: ${chalk.yellowBright(`${first_name} ${last_name}`)} As Employee`));
+                allEmployeeSearch();
+            });
+        });
+    }
+}
 
 function consoleOutQuery(query, message) {
     connnection.query(query, (err, res) => {
