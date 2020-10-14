@@ -7,7 +7,7 @@ const connnection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "Septiembre09#",
     database: "employee_tracker"
 });
 
@@ -32,7 +32,7 @@ function mainPrompt() {
             "Add Department",
             "Add Role",
             "Add Employee",
-            "Update Employee",
+            "Update Employee Role",
             "Update Employee Manager",
             "Remove Department",
             "Remove Role",
@@ -67,6 +67,9 @@ function onMainPromptAnswer({action}) {
             break;
         case "Add Employee":
             addEmployee();
+            break;
+        case "Update Employee Role":
+            updateEmployeeRole();
             break;
         default:
             connnection.end();
@@ -262,16 +265,16 @@ function addRole() {
     });
 }
 
+const allRoleByTitleQuery = "SELECT id, title as name, salary, department_id FROM role";
 function addEmployee() {
 
     const noManagerKey = "=====No Manager=====";
-    const allRoleByTitle = "SELECT id, title as name, salary, department_id FROM role";
     let role_id;
     let manager_id;
     getRole();
 
     function getRole() {
-        connnection.query(allRoleByTitle, (err, allRoleRes) => {
+        connnection.query(allRoleByTitleQuery, (err, allRoleRes) => {
             if (err)
                 throw err;
             
@@ -336,7 +339,7 @@ function addEmployee() {
                 }
             }
         ]).then(({first_name, last_name}) => {
-            let query =  connnection.query(insertEmployeeQuery, [first_name, last_name, role_id, manager_id], (err, res) => {
+            connnection.query(insertEmployeeQuery, [first_name, last_name, role_id, manager_id], (err, res) => {
                 if (err)
                     throw err;
                 console.log(chalk.greenBright(`\nSuccessfully Added: ${chalk.yellowBright(`${first_name} ${last_name}`)} As Employee`));
@@ -344,6 +347,39 @@ function addEmployee() {
             });
         });
     }
+}
+
+function updateEmployeeRole() {
+    const updateEmployeeRoleQuery = `UPDATE employee_tracker.employee SET role_id = ? WHERE id = ?;`
+    connnection.query(allEmployeeByNameQuery, (errE, allEmployee) => {
+        if (errE)
+            throw errE;
+        connnection.query(allRoleByTitleQuery, (errR, allRole) => {
+            if (errR)
+                throw errR;
+
+            inquirer.prompt([{
+                name: "employee_name",
+                type: "list",
+                message: "What Employee Would You Like To Update?",
+                choices: allEmployee
+            }, {
+                name: "role_title",
+                type: "list",
+                message: "What Role Would You Like To Give To This Employee?",
+                choices: allRole
+            }]).then(({employee_name, role_title}) => {
+                let employee = allEmployee.find(item => item.name === employee_name);
+                let role = allRole.find(item => item.name === role_title);
+                connnection.query(updateEmployeeRoleQuery, [role.id, employee.id], (err, res) =>{
+                    if (err)
+                        throw err;
+                    console.log(chalk.greenBright(`\nSuccessfully Updated ${chalk.yellowBright(employee_name)} Role To ${chalk.yellowBright(role_title)}\n`));
+                    mainPrompt();
+                });
+            });
+        });
+    });
 }
 
 function consoleOutQuery(query, message) {
