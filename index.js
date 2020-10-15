@@ -15,8 +15,13 @@ connnection.connect(err => {
     if (err) {
         throw err;
     }
-    mainPrompt();
+    init();
 });
+
+function init() {
+    console.log(chalk.blueBright("\nWelcome to Employee Tracker CLI!\n"));
+    mainPrompt();
+}
 
 function mainPrompt() {
     inquirer.prompt({
