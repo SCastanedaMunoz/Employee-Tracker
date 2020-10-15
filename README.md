@@ -27,7 +27,7 @@ In order to install **Employee Tracker**, there is a multitude of steps to follo
 ## **Usage**
 As mentioned before, The main purpose of this application is intented to architect and build a solution for managing a company's employees. There is a multitude of options for to choose in order to interact with the database. From visualizing data, to updating, adding, and deleting data.
 
-Here is a Video Walkthrough on how to use the app: [Video Walkthrough.](https://drive.google.com/file/d/1F0MIWGrOY3C8PbTsExk5anPaR2Fb5eqr/view?usp=sharing)
+Here is a Video Walkthrough on how to use the app: [Video Walkthrough.](https://drive.google.com/file/d/1SPcJk9EZVkmtZlBdaOW40c1kR8XU7WVB/view)
 
 ## **License**
 
